@@ -1,0 +1,110 @@
+From da83c0ab18e5f80b868f2916f4b81b2eaec09dc4 Mon Sep 17 00:00:00 2001
+From: Daniel Parks <danielrparks@utexas.edu>
+Date: Mon, 30 Jan 2023 17:05:02 -0600
+Subject: [PATCH] Initial work to get it booting on a modern system
+
+---
+ GNUmakefile | 32 +++++++++++++++++++++++++++-----
+ fs/Makefrag |  2 +-
+ 2 files changed, 28 insertions(+), 6 deletions(-)
+
+diff --git a/GNUmakefile b/GNUmakefile
+index 90c359a..1436856 100755
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -4,8 +4,8 @@
+ #
+ #	Recursive Make Considered Harmful
+ #	http://aegis.sourceforge.net/auug97.pdf
+-#
+ 
++# to use modern variants, set the environment variable MODERN=1
+ 
+ ifdef GUEST_KERN
+ OBJDIR := vmm/guest/obj
+@@ -74,7 +74,11 @@ endif
+ # try to generate a unique GDB port
+ GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
+ 
+-CC	:= $(GCCPREFIX)gcc-4.8 -pipe
++ifeq ($(MODERN),1)
++	CC	:= $(GCCPREFIX)gcc -pipe
++else
++	CC  := $(GCCPREFIX)gcc-4.8 -pipe
++endif
+ AS	:= $(GCCPREFIX)as
+ AR	:= $(GCCPREFIX)ar
+ LD	:= $(GCCPREFIX)ld
+@@ -83,7 +87,11 @@ OBJDUMP	:= $(GCCPREFIX)objdump
+ NM	:= $(GCCPREFIX)nm
+ 
+ # Native commands
+-NCC	:= gcc-4.8 $(CC_VER) -pipe
++ifeq ($(MODERN),1)
++	NCC	:= $(GCCPREFIX)gcc -pipe
++else
++	NCC  := $(GCCPREFIX)gcc-4.8 -pipe
++endif
+ NATIVE_CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -I$(TOP) -MD -Wall
+ TAR	:= gtar
+ PERL	:= perl
+@@ -99,11 +107,18 @@ CFLAGS += -I$(TOP)/net/lwip/include \
+ 	  -I$(TOP)/net/lwip/include/ipv4 \
+ 	  -I$(TOP)/net/lwip/jos
+ 
++ifeq ($(MODERN),1)
++	CFLAGS += -Wno-address-of-packed-member -fno-pic
++endif
++
+ # Add -fno-stack-protector if the option exists.
+ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+ 
+ # Common linker flags
+ LDFLAGS := -m elf_x86_64 -z max-page-size=0x1000 --print-gc-sections
++ifeq ($(MODERN),1)
++	LDFLAGS += --allow-multiple-definition
++endif
+ BOOT_LDFLAGS := -m elf_i386
+ 
+ # Linker flags for JOS user programs
+@@ -130,6 +145,9 @@ all:
+ 
+ KERN_CFLAGS := $(CFLAGS) -DJOS_KERNEL -DDWARF_SUPPORT -gdwarf-2 -mcmodel=large -m64
+ BOOT_CFLAGS := $(CFLAGS) -DJOS_KERNEL -gdwarf-2 -m32
++ifeq ($(MODERN),1)
++	BOOT_CFLAGS += -fomit-frame-pointer
++endif
+ USER_CFLAGS := $(CFLAGS) -DJOS_USER -gdwarf-2 -mcmodel=large -m64
+ 
+ ifndef GUEST_KERN
+@@ -187,8 +205,12 @@ IMAGES = $(OBJDIR)/kern/kernel.img
+ QEMUOPTS += -smp $(CPUS)
+ QEMUOPTS += -hdb $(OBJDIR)/fs/fs.img
+ IMAGES += $(OBJDIR)/fs/fs.img
+-QEMUOPTS += -net user -net nic,model=e1000 -redir tcp:$(PORT7)::7 \
+-	   -redir tcp:$(PORT80)::80 -redir udp:$(PORT7)::7 -net dump,file=qemu.pcap
++ifeq ($(MODERN),1)
++	QEMUOPTS += -nic user,id=n1,model=e1000,hostfwd=tcp::$(PORT7)-:7,hostfwd=tcp::$(PORT80)-:80,hostfwd=udp::$(PORT7)-:7 -object filter-dump,id=d1,netdev=n1,file=qemu.pcap
++else
++	QEMUOPTS += -net user -net nic,model=e1000 -redir tcp:$(PORT7)::7 \
++			 -redir tcp:$(PORT80)::80 -redir udp:$(PORT7)::7 -net dump,file=qemu.pcap
++endif
+ QEMUOPTS += $(QEMUEXTRA)
+ 
+ 
+diff --git a/fs/Makefrag b/fs/Makefrag
+index 411b37c..1ca7aeb 100644
+--- a/fs/Makefrag
++++ b/fs/Makefrag
+@@ -90,7 +90,7 @@ $(OBJDIR)/fs/clean-fs.img: $(OBJDIR)/fs/fsformat $(FSIMGFILES)
+ ifndef GUEST_KERN
+ 	$(V)$(OBJDIR)/fs/fsformat $(OBJDIR)/fs/clean-fs.img 4096  $(FSIMGTXTFILES) -b $(USERAPPS) -sb $(ROOTAPPS) -g $(GUESTKERNELS)
+ else
+-	$(V)$(OBJDIR)/fs/fsformat $(OBJDIR)/fs/clean-fs.img 512 $(FSIMGTXTFILES) -b $(USERAPPS) -sb $(ROOTAPPS)
++	$(V)$(OBJDIR)/fs/fsformat $(OBJDIR)/fs/clean-fs.img 1024 $(FSIMGTXTFILES) -b $(USERAPPS) -sb $(ROOTAPPS)
+ endif
+ 
+ $(OBJDIR)/fs/fs.img: $(OBJDIR)/fs/clean-fs.img
+-- 
+2.39.1
+
