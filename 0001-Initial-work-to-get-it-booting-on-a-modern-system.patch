@@ -1,7 +1,7 @@
 From da83c0ab18e5f80b868f2916f4b81b2eaec09dc4 Mon Sep 17 00:00:00 2001
 From: Daniel Parks <danielrparks@utexas.edu>
 Date: Mon, 30 Jan 2023 17:05:02 -0600
-Subject: [PATCH] Initial work to get it booting on a modern system
+Subject: [PATCH 1/5] Initial work to get it booting on a modern system
 
 ---
  GNUmakefile | 32 +++++++++++++++++++++++++++-----

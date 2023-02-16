@@ -1,0 +1,35 @@
+From 7da55008654270db595624e0f9f68e41c9c757ee Mon Sep 17 00:00:00 2001
+From: Daniel Parks <danielrparks@utexas.edu>
+Date: Wed, 15 Feb 2023 20:52:28 -0600
+Subject: [PATCH 5/5] Add custom testcase targets for bochs too
+
+---
+ GNUmakefile | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/GNUmakefile b/GNUmakefile
+index e7a46f7..4b622c1 100755
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -355,6 +355,18 @@ run-%-nox: prep-% pre-qemu
+ run-%: prep-% pre-qemu
+ 	$(QEMU) $(QEMUOPTS)
+ 
++brun-%-nox-gdb: prep-% bochsrc
++    $(BOCHS) $(BOCHSOPTS) 'display_library: term' 'gdbstub: enabled=1, port=1234'
++ 
++brun-%-gdb: prep-% bochsrc
++    $(BOCHS) $(BOCHSOPTS) 'gdbstub: enabled=1, port=1234'
++ 
++brun-%-nox: prep-% bochsrc
++    $(BOCHS) $(BOCHSOPTS) 'display_library: term'
++ 
++brun-%: prep-% bochsrc
++    $(BOCHS) $(BOCHSOPTS)
++
+ # For network connections
+ which-ports:
+ 	@echo "Local port $(PORT7) forwards to JOS port 7 (echo server)"
+-- 
+2.39.1
+

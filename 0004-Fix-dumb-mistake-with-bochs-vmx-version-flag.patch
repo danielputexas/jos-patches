@@ -1,0 +1,25 @@
+From 9847036e2c7456148dc5d2e53e2e2d6b92b4a850 Mon Sep 17 00:00:00 2001
+From: Daniel Parks <danielrparks@utexas.edu>
+Date: Wed, 15 Feb 2023 20:50:47 -0600
+Subject: [PATCH 4/5] Fix dumb mistake with bochs vmx version flag
+
+---
+ .bochsrc_modern.tmpl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.bochsrc_modern.tmpl b/.bochsrc_modern.tmpl
+index 5b2ae6c..259496c 100644
+--- a/.bochsrc_modern.tmpl
++++ b/.bochsrc_modern.tmpl
+@@ -23,7 +23,7 @@ cpu: count=1, ips=4000000, model=bx_generic, reset_on_triple_fault=0, cpuid_limi
+ cpuid: level=6, stepping=3, model=3, family=6, vendor_string="AuthenticAMD", brand_string="AMD Athlon(tm) processor"
+ cpuid: mmx=1, apic=xapic, sse4a=0, misaligned_sse=0, sep=1, movbe=0, adx=0
+ cpuid: aes=0, xsave=0, xsaveopt=0, x86_64=1, 1g_pages=0, pcid=0, fsgsbase=0, smep=0
+-cpuid: smap=0, mwait=1, vmx=1
++cpuid: smap=0, mwait=1, vmx=2
+ #, svm=0
+ print_timestamps: enabled=0
+ # no gdb stub
+-- 
+2.39.1
+

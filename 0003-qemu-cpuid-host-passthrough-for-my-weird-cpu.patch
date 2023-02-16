@@ -1,0 +1,28 @@
+From 18ab7d60790f206ac57ebb0917242ac2166dd6f1 Mon Sep 17 00:00:00 2001
+From: Daniel Parks <danielrparks@utexas.edu>
+Date: Wed, 15 Feb 2023 20:23:30 -0600
+Subject: [PATCH 3/5] qemu cpuid host passthrough for my weird cpu
+
+---
+ GNUmakefile | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/GNUmakefile b/GNUmakefile
+index eda2d1b..e7a46f7 100755
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -196,7 +196,11 @@ PORT80	:= $(shell expr $(GDBPORT) + 2)
+ 
+ ## We need KVM for qemu to export VMX
+ ifndef VMX_CHECK
++ifeq ($(MODERN),1)
++QEMUOPTS = -cpu host -enable-kvm -m 256 -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
++else
+ QEMUOPTS = -cpu qemu64,+vmx -enable-kvm -m 256 -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
++endif
+ else 
+ QEMUOPTS = -cpu qemu64,-vmx -enable-kvm -m 256 -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
+ endif
+-- 
+2.39.1
+
